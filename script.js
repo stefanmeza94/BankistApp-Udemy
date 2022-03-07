@@ -61,11 +61,14 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   // first clean the entire container (containerMovements)
   containerMovements.innerHTML = '';
 
-  movements.forEach((mov, i) => {
+  // we don't want to change originaly movements array, that's why we first copy it with slice method and then sort it, 'cause we know sort method change array on which we called it!
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  movs.forEach((mov, i) => {
     const type = mov > 0 ? 'deposit' : 'withdrawal';
 
     const html = `
@@ -111,7 +114,7 @@ const createUsernames = function (accs) {
 createUsernames(accounts);
 
 // Update UI
-const updateUI = function(acc) {
+const updateUI = function (acc) {
   // Display movements
   displayMovements(acc.movements);
 
@@ -120,24 +123,24 @@ const updateUI = function(acc) {
 
   // Display summary
   calcDisplaySummary(acc);
-}
+};
 
 // Event listeners
 let currentAccount;
 
 // Login user
-btnLogin.addEventListener('click', function(e) {
+btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
 
-  currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value)
+  currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value);
 
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
     // Display UI and message
     labelWelcome.textContent = `Welcome back, ${currentAccount.owner.split(' ')[0]}`;
     containerApp.style.opacity = 1;
 
-    // this is possible 'cause = operator works from right to left, first he will assing 
-    // empty string to inputLoginPin and then that will become empty string, which then 
+    // this is possible 'cause = operator works from right to left, first he will assing
+    // empty string to inputLoginPin and then that will become empty string, which then
     // will be assign to inputLoginUsername
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginPin.blur();
@@ -145,33 +148,28 @@ btnLogin.addEventListener('click', function(e) {
     // Update UI
     updateUI(currentAccount);
   }
-})
+});
 
 // Transfer money
-btnTransfer.addEventListener('click', function(e) {
+btnTransfer.addEventListener('click', function (e) {
   e.preventDefault();
 
   const amount = Number(inputTransferAmount.value);
-  const receiverAcc = accounts.find(acc => acc.username === inputTransferTo.value)
+  const receiverAcc = accounts.find(acc => acc.username === inputTransferTo.value);
 
   inputTransferTo.value = inputTransferAmount.value = '';
-  
-  if (
-    amount > 0 && 
-    receiverAcc &&
-    currentAccount.balance >= amount &&
-    receiverAcc?.username !== currentAccount.username
-    ) {
-      currentAccount.movements.push(-amount);
-      receiverAcc.movements.push(amount);
 
-      // Update UI
-      updateUI(currentAccount);
+  if (amount > 0 && receiverAcc && currentAccount.balance >= amount && receiverAcc?.username !== currentAccount.username) {
+    currentAccount.movements.push(-amount);
+    receiverAcc.movements.push(amount);
+
+    // Update UI
+    updateUI(currentAccount);
   }
-})
+});
 
-// Request a loan 
-btnLoan.addEventListener('click', function(e) {
+// Request a loan
+btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
 
   const amount = Number(inputLoanAmount.value);
@@ -184,16 +182,13 @@ btnLoan.addEventListener('click', function(e) {
     updateUI(currentAccount);
   }
   inputLoanAmount.value = '';
-})
+});
 
 // Close account
-btnClose.addEventListener('click', function(e) {
-  e.preventDefault()
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
 
-  if (
-    inputCloseUsername.value === currentAccount.username &&
-    Number(inputClosePin.value) === currentAccount.pin
-    ) {
+  if (inputCloseUsername.value === currentAccount.username && Number(inputClosePin.value) === currentAccount.pin) {
     const index = accounts.findIndex(acc => acc.username === currentAccount.username);
 
     // Delete account
@@ -203,5 +198,15 @@ btnClose.addEventListener('click', function(e) {
     containerApp.style.opacity = 0;
   }
 
-  inputCloseUsername.value = inputClosePin.value = ''; 
-})  
+  inputCloseUsername.value = inputClosePin.value = '';
+});
+
+let sorted = false;
+
+// Sort movements
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+
+  displayMovements(currentAccount.movements, !sorted);
+  sorted = !sorted;
+});
